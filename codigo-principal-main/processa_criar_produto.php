@@ -12,50 +12,59 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Conexão falhou: " . $conn->connect_error);
 }
-
-// Verificar se o formulário foi enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Processar e limpar os dados do formulário
-    $nome = isset($_POST['nome']) ? trim($_POST['nome']) : '';
-    $descricao = isset($_POST['descricao']) ? trim($_POST['descricao']) : '';
-    $preco = isset($_POST['preco']) ? trim($_POST['preco']) : '';
-    $altura = isset($_POST['altura']) ? trim($_POST['altura']) : '';
-    $largura = isset($_POST['largura']) ? trim($_POST['largura']) : '';
-    $comprimento = isset($_POST['comprimento']) ? trim($_POST['comprimento']) : '';
-    $foto = isset($_POST['foto']) ? trim($_POST['foto']) : '';
-
     /*A função "trim" é usado para limpar espaços brancos/vazios.
     
     A função isset verifica se uma variável está definida e não é null.
     Costuma ser usado para ter certeza que o valor realmente exista.*/
-
-    // Validação básica
-    if (empty($nome) || empty($preco)) {
-        echo "Nome e preço são obrigatórios.";
-        exit();
-    }
-
-    // Preparar a declaração
-    $stmt = $conn->prepare("INSERT INTO produtos (nome, descricao, preco, altura, largura, comprimento, foto) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssddddd", $nome, $descricao, $preco, $altura, $largura, $comprimento, $foto);
 
     /* Signficado do "s" e "d". 
     "D" = é um parâmentro que é usado para valores numéricos que tenham casas decimais.
     "S" = é um string, sendo assim, é aonde que está pegando as informações do script.
     */ 
 
-    // Executar a inserção
-    if ($stmt->execute()) {
-        echo "Sucesso!";
-    } else {
-        echo "Erro: " . $stmt->error;
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $nome = $_POST['nome'];
+    $descricao = $_POST['descricao'];
+    $preco = $_POST['preco'];
+    $preco = isset($_POST['preco']);
+    $altura = isset($_POST['altura']);
+    $largura = isset($_POST['largura']);
+    $comprimento = isset($_POST['comprimento']);
+    $foto = $_FILES['foto']['name'];
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["foto"]["name"]);
+
+    // Verifica se o diretório 'uploads/' existe
+    if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0755, true);
     }
 
-    // Fechar a declaração
-    $stmt->close();
-}
+    // Tenta mover o arquivo para o diretório de uploads
+    if (move_uploaded_file($_FILES["foto"]["tmp_name"], $target_file)) {
+        // Preparar e executar a consulta SQL
+        $stmt = $conn->prepare("INSERT INTO produtos (nome, descricao, preco, altura, largura, comprimento, foto) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-$conn->close();
+        // Verifique se a preparação da consulta foi bem-sucedida
+        if ($stmt === false) {
+            die("Erro ao preparar a consulta: " . $conn->error);
+        }
+
+        $stmt->bind_param("ssiddds", $nome, $descricao, $preco, $altura, $largura, $comprimento, $foto);
+
+        if ($stmt->execute()) {
+            header("Location: index.php");
+            exit;
+        } else {
+            echo "Erro ao inserir produto: " . $stmt->error;
+        }
+
+        $stmt->close();
+    } else {
+        echo "Erro ao fazer upload da foto.";
+    }
+
+    $conn->close();
+}
 ?>
 
 <!DOCTYPE html>

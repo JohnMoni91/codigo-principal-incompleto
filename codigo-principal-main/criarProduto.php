@@ -1,46 +1,5 @@
 <?php
 include 'validatoradmin.php';
-
-// Conectar ao banco de dados
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "baloja";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Conexão falhou: " . $conn->connect_error);
-}
-
-// Preparar e executar a inserção
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome = $_POST['nome'] ?? '';
-    $descricao = $_POST['descricao'] ?? '';
-    $preco = $_POST['preco'] ?? '';
-    $altura = $_POST['altura'] ?? '';
-    $largura = $_POST['largura'] ?? '';
-    $comprimento = $_POST['comprimento'] ?? '';
-    $foto = $_POST['foto'] ?? '';
-
-    $sql = "INSERT INTO produtos (nome, descricao, preco, altura, largura, comprimento, foto) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("ssddddd", $nome, $descricao, $preco, $altura, $largura, $comprimento, $foto);
-
-        if ($stmt->execute()) {
-            echo "Novo produto adicionado com sucesso!";
-        } else {
-            echo "Erro: " . $stmt->error;
-        }
-
-        $stmt->close();
-    } else {
-        echo "Erro na preparação da declaração: " . $conn->error;
-    }
-}
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -55,7 +14,7 @@ $conn->close();
 </head>
 
 <body>
-<?php include 'cabecalho.php'?>
+<?php include 'cabecalho.php' ?>
 
     <div id="criarproduto">
         <form action="processa_criar_produto.php" method="post" enctype="multipart/form-data">
